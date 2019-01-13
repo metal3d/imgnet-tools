@@ -102,7 +102,7 @@ if __name__ == "__main__":
         '--dest',
         help='destination root (without classname) directory '
              'where images will be downloaded',
-        default='.'
+        default=DEST
     )
     parser.add_argument(
         '-t',
