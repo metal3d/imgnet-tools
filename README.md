@@ -5,6 +5,15 @@ This repository contains 2 scripts:
 - `dl-imgnet` to download a image-net.org image set using the ID found in the search engine
 - `splitter` to split images in train and valid directories
 
+Note that the `dl-imgnet` script makes some generic tests:
+
+- is the image a real "image" ?
+- is it a known "bad image" (for example, sometimes, flickr returns a "logo" to say that image is not found, with a 200 status code)
+
+That's mainly why I created that script: to be able to download images and avoid bad files
+
+Any help, ideas, fixes, and so on... are gracefully appreciated :)
+
 ## dl-imgnet
 
 To use that script, go to http://image-net.org, then make a search request. For example "pizza". The website will show you several image set, you may now choose one.
