@@ -56,7 +56,7 @@ def dl_image(imurl, classname='unknown', dest='./'):
         print('Error, connot download', imurl, e)
         return
 
-    # is it a read image ?
+    # is it a valid image ?
     b = io.BytesIO()
     b.write(im.content)
     b.seek(0)
