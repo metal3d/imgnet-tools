@@ -34,8 +34,10 @@ def dl_image(imurl, classname='unknown', dest='./'):
     imname = os.path.basename(imurl)
     imname = imname.decode()
 
+    # prepare the desitnation directory
     os.makedirs(os.path.join(dest, classname), exist_ok=True)
 
+    # where to save image
     fileto = os.path.join(dest, classname, imname)
 
     print('Check image name', imname)
@@ -44,6 +46,7 @@ def dl_image(imurl, classname='unknown', dest='./'):
         print('File %s already downloaded, skippiing' % fileto)
         return
 
+    # download image, and check status_code
     try:
         im = requests.get(imurl, timeout=TIMEOUT)
         if im.status_code != 200:
@@ -63,10 +66,9 @@ def dl_image(imurl, classname='unknown', dest='./'):
 
     # checking md5 of known bad files
     hhs = hashlib.md5(im.content).hexdigest()
-    for md in BADIMG:
-        if md == hhs:
-            print('image %s seems to be a "bad file"' % fileto)
-            return
+    if hhs in BADIMG:
+        print('image %s seems to be a "bad file"' % fileto)
+        return
 
     # md5 is ok, downloaded file is not empty, we can save it
     with open(fileto, 'wb') as f:
