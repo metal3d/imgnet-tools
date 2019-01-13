@@ -1,9 +1,9 @@
-# Easy image-net downloader and spliter
+# Easy image-net downloader and splitter
 
 This repository contains 2 scripts:
 
-- `dl-imgnet` to download a image-net.org image set using the ID found in the search engine
-- `splitter` to split images in train and valid directories
+- `dl-imgnet.py` to download a image-net.org image set using the ID found in the search engine
+- `splitter.py` to split images in train and valid directories
 
 Note that the `dl-imgnet` script makes some generic tests:
 
@@ -26,7 +26,15 @@ Copy that ID, and use the command line:
 ./dl-imgnet.py n07873807 pizzas
 ```
 
-You may provide 2 others options:
+It will create a `pizzas` directory and download all valid images inside. You can change the destination:
+
+```bash
+./dl-imgnet.py n07873807 pizzas -d base
+```
+
+This will create a `base/pizzas` directory and use it to downoad images.
+
+You may provide others options:
 
 - `-d` or `--dest` to indicate the destination directory where to download images (don't provide the image class, the script concatanates the classname to the destination) - default is the current directory
 - `-t` or `--timeout` to indicate how many second to set on request timeout
@@ -41,6 +49,16 @@ Sometimes, you need to split train and validation images in separated directorie
 ```
 
 It will create "valid" and "train" directories and copy random images from the `rep/to/pizzas` directory in both directories. The default fraction of image to send to "valid" is ".2" (20%).
+
+One more time, you can change destination and/or fraction to split:
+
+```bash
+./splitter.py base/pizzas -d data -f .3
+```
+
+This time, it split pizza images with 30% for validation, and images are copied in `data/valid/pizzas` and `data/train/pizzas`.
+
+**Of course, you can split several "base", it will not remove the other directories.**
 
 You can change the options:
 
