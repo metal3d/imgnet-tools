@@ -58,7 +58,7 @@ if __name__ == '__main__':
              '"--dest data" will create a "data" directory '
              'and the script will create "data/train/<class>" '
              'and "data/valid/<class>"',
-        default='.'
+        default=DEST
     )
     parser.add_argument(
         '-c', '--classname',

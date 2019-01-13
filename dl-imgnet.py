@@ -109,7 +109,7 @@ if __name__ == "__main__":
         '--timeout',
         type=int,
         help='Timeout in seconds for requests before to abandon download',
-        default=5
+        default=TIMEOUT
     )
     parser.add_argument(
         '-n',
