@@ -29,7 +29,7 @@ Copy that ID, and use the command line:
 You may use a list of IDs, if you want to merge several classification (eg. Hamburger on imagenet site is splitted in 2 classes):
 
 ```
-./dl-imgnet.py n07711080,n07711232 burger -d
+./dl-imgnet.py n07711080,n07711232 burger
 ```
 
 **Note** the script will create a CSV file keeping downloaded image urls, md5 sum of the file, the classname and the "id" of imagenet class. This is usefull to not download already downloeded files and to keep the source of images. This file is named `data.csv` and can be changed with `-c` argument.
