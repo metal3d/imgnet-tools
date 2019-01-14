@@ -26,6 +26,10 @@ Copy that ID, and use the command line:
 ./dl-imgnet.py n07873807 pizzas
 ```
 
+**Note** the script will create a CSV file keeping downloaded image urls, md5 sum of the file and the classname. This is usefull to not download already downloeded files and to keep the source of images. This file is named `data.csv` and can be changed with `-c` argument.
+
+**Note** also, the script save image with name template `<md5sum>.<type>`, the type is defined by `imghdr.what()` function (python3 standard). That way, it's possible to have several URL having the same image name, but not the same content.
+
 It will create a `pizzas` directory and download all valid images inside. You can change the destination:
 
 ```bash
@@ -39,6 +43,7 @@ You may provide others options:
 - `-d` or `--dest` to indicate the destination directory where to download images (don't provide the image class, the script concatanates the classname to the destination) - default is the current directory
 - `-t` or `--timeout` to indicate how many second to set on request timeout
 - `-n` or `--num-worker` to indicate how many parallel download to use. Default is set to your CPU number.
+- `-c` or `--csv` path to the CSV file where to keep downloaded image information
 
 ## splitter
 
