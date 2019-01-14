@@ -26,7 +26,13 @@ Copy that ID, and use the command line:
 ./dl-imgnet.py n07873807 pizzas
 ```
 
-**Note** the script will create a CSV file keeping downloaded image urls, md5 sum of the file and the classname. This is usefull to not download already downloeded files and to keep the source of images. This file is named `data.csv` and can be changed with `-c` argument.
+You may use a list of IDs, if you want to merge several classification (eg. Hamburger on imagenet site is splitted in 2 classes):
+
+```
+./dl-imgnet.py n07711080,n07711232 burger -d
+```
+
+**Note** the script will create a CSV file keeping downloaded image urls, md5 sum of the file, the classname and the "id" of imagenet class. This is usefull to not download already downloeded files and to keep the source of images. This file is named `data.csv` and can be changed with `-c` argument.
 
 **Note** also, the script save image with name template `<md5sum>.<type>`, the type is defined by `imghdr.what()` function (python3 standard). That way, it's possible to have several URL having the same image name, but not the same content.
 
@@ -43,7 +49,7 @@ You may provide others options:
 - `-d` or `--dest` to indicate the destination directory where to download images (don't provide the image class, the script concatanates the classname to the destination) - default is the current directory
 - `-t` or `--timeout` to indicate how many second to set on request timeout
 - `-n` or `--num-worker` to indicate how many parallel download to use. Default is set to your CPU number.
-- `-c` or `--csv` path to the CSV file where to keep downloaded image information
+- `-c` or `--csv` path to the CSV file where to keep downloaded images information
 
 ## splitter
 

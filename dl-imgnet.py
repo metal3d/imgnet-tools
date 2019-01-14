@@ -7,6 +7,7 @@ import io
 import queue
 import threading
 import multiprocessing
+import sys
 
 CPUs = multiprocessing.cpu_count()
 
@@ -40,11 +41,21 @@ def logthat(content, total=None, index=None):
         print('%s' % content)
 
 
-def save_data(url, md5, classname):
+def save_data(url, md5, classname, nid):
     locker.acquire()
+
+    if not os.path.exists(DATAFILE):
+        try:
+            # append header line
+            with open(DATAFILE, 'a+') as f:
+                f.write('Base URL,MD5 Sum,Classname,Imagenet ID\n')
+        except Exception as e:
+            print(e)
+            sys.exit(0)
+
     try:
         with open(DATAFILE, 'a+') as f:
-            f.write('%s,%s,%s\n' % (url.decode(), md5, classname))
+            f.write('%s,%s,%s,%s\n' % (url.decode(), md5, classname, nid))
     except Exception as e:
         print(e)
     finally:
@@ -68,7 +79,13 @@ def is_in_db(url):
     return False
 
 
-def dl_image(imurl, classname='unknown', dest='./', total=None, index=None):
+def dl_image(
+        imurl,
+        classname='unknown',
+        dest='./',
+        total=None,
+        index=None,
+        nid=None):
     imname = os.path.basename(imurl)
     imname = imname.decode()
 
@@ -90,7 +107,8 @@ def dl_image(imurl, classname='unknown', dest='./', total=None, index=None):
         im = requests.get(imurl, timeout=TIMEOUT)
         if im.status_code != 200:
             logthat(
-                'Status code is not OK for %s, %d' % (imurl, im.status_code),
+                'Status code is not OK for %s, %d' % (
+                    imurl.decode(), im.status_code),
                 total,
                 index
             )
@@ -126,16 +144,16 @@ def dl_image(imurl, classname='unknown', dest='./', total=None, index=None):
     # md5 is ok, downloaded file is not empty, we can save it
     with open(fileto, 'wb') as f:
         f.write(im.content)
+        save_data(imurl, hhs, classname, nid)
         logthat("%s file saved" % imname, total, index)
-        save_data(imurl, hhs, classname)
 
 
 def task_download():
     while True:
-        item, classname, total, index = q.get()
+        item, classname, total, index, nid = q.get()
         if item is None:
             break
-        dl_image(item, classname, DEST, total, index)
+        dl_image(item, classname, DEST, total, index, nid)
         q.task_done()
 
 
@@ -145,7 +163,9 @@ if __name__ == "__main__":
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         'nid',
-        help='Id of the imagenet group to download')
+        help='Id of the imagenet group to download. '
+             'It can be a coma separated of ids.'
+    )
     parser.add_argument(
         'name',
         help='Real classname of the images to '
@@ -183,7 +203,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    nid = args.nid
+    nids = args.nid
     classname = args.name
     NUM_WORKERS = args.num_worker
     TIMEOUT = args.timeout
@@ -196,23 +216,29 @@ if __name__ == "__main__":
         t.start()
         threads.append(t)
 
-    res = get_list(nid)
-    # list is not very well formatted, we need
-    # to iterate to count, and not find "\n" or whatever
-    # the line delimiter
-    for idx, _ in enumerate(res.iter_lines()):
-        lines_count = idx
+    lines_count = 1
+    results = {}
+    for nid in nids.split(','):
+        nid = nid.strip()
+        res = get_list(nid)
+        # list is not very well formatted, we need
+        # to iterate to count, and not find "\n" or whatever
+        # the line delimiter
+        for _ in res.iter_lines():
+            lines_count += 1
 
-    # it starts from 0, so add one
-    lines_count += 1
+        results[nid] = res
 
-    for idx, u in enumerate(res.iter_lines()):
-        q.put((u, classname, lines_count, idx))
+    lastidx = 0
+    for nid, res in results.items():
+        for u in res.iter_lines():
+            q.put((u, classname, lines_count, lastidx, nid))
+            lastidx += 1
 
     q.join()
 
     for i in range(NUM_WORKERS):
-        q.put((None, None, None, None))
+        q.put((None, None, None, None, None))
 
     for t in threads:
         t.join()
