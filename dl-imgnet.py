@@ -33,7 +33,7 @@ def get_list(imid):
     return imlist
 
 
-def logthat(content, total=-1, index=-1):
+def logthat(content, total=None, index=None):
     if total is not None and index is not None:
         print('%d/%d %s' % (index+1, total, content))
     else:
