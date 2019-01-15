@@ -1,5 +1,9 @@
 # Easy image-net downloader and splitter
 
+## What is it ?
+
+Image-net.org provides millions of images that are classified by type, names... This is a fabulous data source to be able to make machine learning and image recognition. This repositoy provides tools to download and split data coming from image-net website.
+
 This repository contains 2 scripts:
 
 - `dl-imgnet.py` to download a image-net.org image set using the ID found in the search engine
@@ -13,6 +17,32 @@ Note that the `dl-imgnet` script makes some generic tests:
 That's mainly why I created that script: to be able to download images and avoid bad files
 
 Any help, ideas, fixes, and so on... are gracefully appreciated :)
+
+
+## Requirements
+
+- Python 3
+- Pip 3 (to install requirements if your package manager doesn't provide `python3-requests`)
+- Requests package
+- Internt connection...
+
+As you need "requests" package, it's recommended to use you package manager to install the python3 package:
+
+```bash
+# Fedora, CentOS, Red Hat Like...
+sudo dnf install python3-requests
+
+# Debian like, Ubuntu...
+sudo apt install python3-requests
+```
+
+If you cannot install the required pacakge with your package manager, I provide a minimal requirements file, so just type:
+
+```bash
+pip3 install -r requirements.txt
+```
+
+# Usage
 
 ## dl-imgnet
 
@@ -61,6 +91,18 @@ Sometimes, you need to split train and validation images in separated directorie
 
 It will create "valid" and "train" directories and copy random images from the `rep/to/pizzas` directory in both directories. The default fraction of image to send to "valid" is ".2" (20%).
 
+`train.csv` and `valid.csv` are also written in the destination directory. If you launch again the splitter, so that files are **updated** to append others classes/files. You'll need to delete the CSV files if you want a new clean list. This is not the same behaviour with the `--all` option that removes CSV files before to recreate them.
+
+You can tell `splitter` to split the entire classes from a "base" directory:
+
+```bash
+./splitter.py rep/without/class -a
+```
+
+This will find the entire class list and split them in "train" and "valid" directories. Note that in that case, the CSV files are **deleted** before to be rewritten !
+
+You may want to not copy images and only want CSV files (`train.csv` and `valid.csv`), so you can use `-C` or `--csv-only` option.
+
 One more time, you can change destination and/or fraction to split:
 
 ```bash
@@ -73,6 +115,8 @@ This time, it split pizza images with 30% for validation, and images are copied 
 
 You can change the options:
 
+- `-a` or `--all` to split the whole class list found in SRC directory.
+- `-C` or `--csv-only` will not copy images in destination, only create the CSV files containing filename and classname.
 - `-d` or `--dest` to indicate the destination root directory where will reside "train" and "valid" directory (eg. "data", will create "data/train/pizza" for example)
-- `-f` or `--frac` to a number between .1 and .9 (note that you should use recommanded values: .2 or .3)
+- `-f` or `--frac` to a number between .1 and .9 (note that you should use recommended values: .2 or .3)
 - `-c` or `--classname` to indicate another classname that the source directory name.

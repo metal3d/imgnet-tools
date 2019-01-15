@@ -1,4 +1,10 @@
 #! /bin/env python3
+""" Helper script to download image-net.org image corresponding
+to a given ID.
+
+Author: Patrice FERLET <metal3d@gmail.com>
+Licence: MIT
+"""
 import requests
 import os
 import hashlib
@@ -29,32 +35,39 @@ q = queue.Queue(CPUs)
 locker = threading.Lock()
 
 
-def get_list(imid):
+def get_list(imid: str) -> requests.Response:
+    """ Return the requests.Response containing
+        the list of images for a given image-net.org
+        collection ID.
+    """
     imlist = requests.get(LIST_URL.format(imid=imid))
     return imlist
 
 
 def logthat(content, total=None, index=None):
+    """ Helper function to write logs
+        with progression status.
+    """
     if total is not None and index is not None:
         print('%d/%d %s' % (index+1, total, content))
     else:
         print('%s' % content)
 
 
-def save_data(url, md5, classname, nid):
+def save_data(url: bytes, md5: str, classname: str, nid: str):
     locker.acquire()
 
     if not os.path.exists(DATAFILE):
         try:
             # append header line
-            with open(DATAFILE, 'a+') as f:
+            with open(DATAFILE, 'a') as f:
                 f.write('Base URL,MD5 Sum,Classname,Imagenet ID\n')
         except Exception as e:
             print(e)
             sys.exit(0)
 
     try:
-        with open(DATAFILE, 'a+') as f:
+        with open(DATAFILE, 'a') as f:
             f.write('%s,%s,%s,%s\n' % (url.decode(), md5, classname, nid))
     except Exception as e:
         print(e)
@@ -62,7 +75,10 @@ def save_data(url, md5, classname, nid):
         locker.release()
 
 
-def is_in_db(url):
+def is_in_db(url: bytes):
+    """ Fetch given url in CSV file and return boolean
+        saying if the file is already downloaded.
+    """
     locker.acquire()
     try:
         with open(DATAFILE, 'r') as f:
@@ -80,12 +96,15 @@ def is_in_db(url):
 
 
 def dl_image(
-        imurl,
+        imurl: bytes,
         classname='unknown',
         dest='./',
         total=None,
         index=None,
         nid=None):
+    """ Download image from the given url, save it as classname
+        and check if the image is correct.
+    """
     imname = os.path.basename(imurl)
     imname = imname.decode()
 
@@ -149,6 +168,9 @@ def dl_image(
 
 
 def task_download():
+    """ Helper function that is launched by threading.Thread.
+        It reads Queue and call dl_image() in parallel.
+    """
     while True:
         item, classname, total, index, nid = q.get()
         if item is None:
