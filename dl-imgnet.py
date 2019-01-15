@@ -78,7 +78,7 @@ def save_data(url: bytes, md5: str, classname: str, nid: str):
 
     try:
         with open(DATAFILE, 'a') as f:
-            f.write('%s,%s,%s,%s\n' % (url.decode(), md5, classname, nid))
+            f.write('"%s",%s,"%s",%s\n' % (url.decode(), md5, classname, nid))
     except Exception as e:
         print(e)
     finally:
@@ -91,16 +91,14 @@ def is_in_db(url: bytes):
     """
     locker.acquire()
     try:
-        with open(DATAFILE, 'r') as f:
-            lines = f.readlines()
+        lines = open(DATAFILE).readlines()
     except Exception:
         return False
     finally:
         locker.release()
 
     for l in lines:
-        elements = l.split(',')
-        if elements[0] == url.decode():
+        if url.decode() in l:
             return True
     return False
 

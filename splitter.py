@@ -32,7 +32,7 @@ def write_base(files, classname: str, usage: str):
 
         with open(csvfile, 'a+') as csv:
             for f in files:
-                line = '%s,%s' % (f, classname)
+                line = '"%s","%s"' % (f, classname)
                 # do not rewrite already found files/classname
                 if line not in content:
                     csv.write(line + '\n')
