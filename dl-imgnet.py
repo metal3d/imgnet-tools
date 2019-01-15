@@ -31,8 +31,18 @@ DEST = './'
 DATAFILE = './data.csv'
 
 
-q = queue.Queue(CPUs)
+q = None
 locker = threading.Lock()
+
+
+def init_queue(number: int = CPUs):
+    """ Initiate Queue to that number of elements """
+    global q
+    if q is None:
+        print("Initializing Queue to %d workers" % number)
+        q = queue.Queue(number)
+    else:
+        print('Queue already initialized')
 
 
 def get_list(imid: str) -> requests.Response:
@@ -171,6 +181,7 @@ def task_download():
     """ Helper function that is launched by threading.Thread.
         It reads Queue and call dl_image() in parallel.
     """
+    init_queue()
     while True:
         item, classname, total, index, nid = q.get()
         if item is None:
@@ -231,6 +242,8 @@ if __name__ == "__main__":
     TIMEOUT = args.timeout
     DEST = args.dest
     DATAFILE = args.csv
+
+    init_queue(NUM_WORKERS)
 
     threads = []
     for i in range(NUM_WORKERS):
