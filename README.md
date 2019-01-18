@@ -56,6 +56,14 @@ Copy that ID, and use the command line:
 ./dl-imgnet.py n07873807 pizzas
 ```
 
+The script is also able to make a search on terms:
+
+```bash
+./dl-imgnet.py pizza
+```
+
+In this case, a search is made on the given term, and a list of IDs with description and link is displayed - **but no download is made**. You can visit provided links and choose IDs.
+
 You may use a list of IDs, if you want to merge several classification (eg. French Fries on imagenet site is splitted in 2 classes):
 
 ```
@@ -63,8 +71,14 @@ You may use a list of IDs, if you want to merge several classification (eg. Fren
 ```
 
 **Note** the script will create a CSV file keeping downloaded image urls, md5 sum of the file, the classname and the "id" of imagenet class. This is usefull to not download already downloeded files and to keep the source of images. This file is named `data.csv` and can be changed with `-c` argument.
+The `data.csv` file provides information:
 
-**Note** also, the script save image with name template `<md5sum>.<type>`, the type is defined by `imghdr.what()` function (python3 standard). That way, it's possible to have several URL having the same image name, but not the same content.
+- Sysnet ID
+- URL of the image
+- classname
+- ID of collection from imagenet
+
+**Note** also, the script save image with name template `<sysnet ID>.<type>`, the type is defined by `imghdr.what()` function (python3 standard). That way, it's possible to have several URL having the same image name, but not the same content.
 
 It will create a `pizzas` directory and download all valid images inside. You can change the destination:
 

@@ -17,7 +17,14 @@ import sys
 
 CPUs = multiprocessing.cpu_count()
 
-LIST_URL = 'http://image-net.org/api/text/imagenet.synset.geturls?wnid={imid}'
+# LIST_URL =
+# 'http://image-net.org/api/text/imagenet.synset.geturls?wnid={imid}'
+
+LIST_URL = ''.join([
+    'http://www.image-net.org/',
+    'api/text/imagenet.synset.geturls.getmapping?wnid={imid}'])
+
+SEE_URL = 'http://www.image-net.org/synset?wnid={id}'
 
 # not wanted images, mainly for flickr bad file, hugedomain logos...
 BADIMG = [
@@ -64,28 +71,28 @@ def logthat(content, total=None, index=None):
         print('%s' % content)
 
 
-def save_data(url: bytes, md5: str, classname: str, nid: str):
+def save_data(imname: str, url: str, classname: str, nid: str):
     locker.acquire()
 
     if not os.path.exists(DATAFILE):
         try:
             # append header line
             with open(DATAFILE, 'a') as f:
-                f.write('Base URL,MD5 Sum,Classname,Imagenet ID\n')
+                f.write('Sysnet Name,Base URL,Classname,Imagenet ID\n')
         except Exception as e:
             print(e)
             sys.exit(0)
 
     try:
         with open(DATAFILE, 'a') as f:
-            f.write('"%s",%s,"%s",%s\n' % (url.decode(), md5, classname, nid))
+            f.write('"%s",%s,"%s",%s\n' % (imname, url, classname, nid))
     except Exception as e:
         print(e)
     finally:
         locker.release()
 
 
-def is_in_db(url: bytes):
+def is_in_db(imname: str):
     """ Fetch given url in CSV file and return boolean
         saying if the file is already downloaded.
     """
@@ -98,13 +105,14 @@ def is_in_db(url: bytes):
         locker.release()
 
     for l in lines:
-        if url.decode() in l:
+        if imname in l:
             return True
     return False
 
 
 def dl_image(
-        imurl: bytes,
+        imname: str,
+        imurl: str,
         classname='unknown',
         dest='./',
         total=None,
@@ -113,8 +121,8 @@ def dl_image(
     """ Download image from the given url, save it as classname
         and check if the image is correct.
     """
-    imname = os.path.basename(imurl)
-    imname = imname.decode()
+    # imname = os.path.basename(imurl)
+    # imname = imname.decode()
 
     # prepare the desitnation directory
     os.makedirs(os.path.join(dest, classname), exist_ok=True)
@@ -125,7 +133,7 @@ def dl_image(
     #    return
 
     # check if image is in csv database
-    if is_in_db(imurl):
+    if is_in_db(imname):
         logthat('Image already downloaded, skipping', total, index)
         return
 
@@ -135,7 +143,7 @@ def dl_image(
         if im.status_code != 200:
             logthat(
                 'Status code is not OK for %s, %d' % (
-                    imurl.decode(), im.status_code),
+                    imurl, im.status_code),
                 total,
                 index
             )
@@ -161,17 +169,20 @@ def dl_image(
         )
         return
 
-    # checking md5 of known bad files
-    hhs = hashlib.md5(im.content).hexdigest()
-    fileto = os.path.join(dest, classname, hhs + '.' + ext)
-    if hhs in BADIMG:
-        logthat('image %s seems to be a "bad file"' % fileto, total, index)
+    # is it a bad image ?
+    md5 = hashlib.md5(im.content).hexdigest()
+    if md5 in BADIMG:
+        logthat(
+            imname + ' md5 corresponds to a bad image, skipping',
+            total,
+            index)
         return
 
+    fileto = os.path.join(dest, classname, imname + '.' + ext)
     # md5 is ok, downloaded file is not empty, we can save it
     with open(fileto, 'wb') as f:
         f.write(im.content)
-        save_data(imurl, hhs, classname, nid)
+        save_data(imname, imurl, classname, nid)
         logthat("%s file saved" % imname, total, index)
 
 
@@ -181,10 +192,10 @@ def task_download():
     """
     init_queue()
     while True:
-        item, classname, total, index, nid = q.get()
+        imname, item, classname, total, index, nid = q.get()
         if item is None:
             break
-        dl_image(item, classname, DEST, total, index, nid)
+        dl_image(imname, item, classname, DEST, total, index, nid)
         q.task_done()
 
 
@@ -195,7 +206,10 @@ if __name__ == "__main__":
     parser.add_argument(
         'nid',
         help='Id of the imagenet group to download. '
-             'It can be a coma separated of ids.'
+             'It can be a coma separated of ids. It\'s an optionnal '
+             'argument, if leaved empty, so a search is made on imagenet '
+             'with the class name argument and nothing is downloaded.',
+        nargs='?'
     )
     parser.add_argument(
         'name',
@@ -241,6 +255,22 @@ if __name__ == "__main__":
     DEST = args.dest
     DATAFILE = args.csv
 
+    if args.nid is None:
+        # get words
+        nids = []
+        words = requests.get('http://image-net.org/archive/words.txt')
+        print('You didn\'t provide ID, choose in the list')
+        for line in words.iter_lines():
+            nid, terms = line.decode().split('\t')
+            for n in classname.split(','):
+                if n in terms:
+                    print(
+                        nid,
+                        terms,
+                        "See results at: %s" % SEE_URL.format(id=nid)
+                    )
+        sys.exit(0)
+
     init_queue(NUM_WORKERS)
 
     threads = []
@@ -265,13 +295,18 @@ if __name__ == "__main__":
     lastidx = 0
     for nid, res in results.items():
         for u in res.iter_lines():
-            q.put((u, classname, lines_count, lastidx, nid))
+            u = u.decode().split(' ')
+            if len(u) == 2:
+                imname, u = list(u)
+            else:
+                continue
+            q.put((imname, u, classname, lines_count, lastidx, nid))
             lastidx += 1
 
     q.join()
 
     for i in range(NUM_WORKERS):
-        q.put((None, None, None, None, None))
+        q.put((None, None, None, None, None, None))
 
     for t in threads:
         t.join()
